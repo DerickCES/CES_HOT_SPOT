@@ -5,6 +5,7 @@ import FiberSplicingGUI from "./GISSpliceGUI";
 import LoginGIS from "./LoginGIS";
 import GISLayers from "./GISLayers";
 import GISViewerHeat from "./GISViewerHeat";
+import DataFetcher from "./DATA";
 
 export {
     GISMenuBar,
@@ -12,6 +13,7 @@ export {
     FiberSplicingGUI,
     LoginGIS,
     GISLayers,
-    GISViewerHeat
+    GISViewerHeat,
+    DataFetcher,
     // /GISViewer,  
 }

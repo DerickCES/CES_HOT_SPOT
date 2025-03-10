@@ -1,14 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { TILE_LAYERS } from '../map_tile_providerGISViewer';
 import GISToolbar from './GISToolbar';
 import GISViewerHeat from './GISViewerHeat';
-import { connectionsArray, polesArray } from './Array'; // Using your static arrays
+import DataFetcher from './DATA';
 
 const GISMainHeat = () => {
   const [currentTileLayer, setCurrentTileLayer] = useState(TILE_LAYERS.OpenStreetMapUK);
-  const [modalJointInfo, setModalJointInfo] = useState("");
-  const [fetchedData, setFetchedData] = useState({ poles: [], connections: [] }); // Using static arrays for now
-
+  const [fetchedData, setFetchedData] = useState({ poles: [], connections: [] }); // Real fetched data
   const [layers, setLayers] = useState({
     Poles: false,
     Connections: false,
@@ -20,39 +19,86 @@ const GISMainHeat = () => {
     Active: false,
   });
 
-  // Trigger data fetch when layer toggles (but using static arrays now)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Function to fetch data based on the type and status
+  const fetchData = async (type, status = '') => {
+    if (!type) {
+      console.error('Type is required but missing.');
+      setError('Type parameter is missing.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      console.log('Fetching data with:', { type, status });
+
+      const response = await axios.get('https://hotspot-service.onrender.com/fetchData', {
+        params: { type, ...(status ? { status } : {}) },
+        timeout: 60000, // Wait for 60 seconds
+      });
+
+      console.log('Received Data:', response.data);
+
+      if (!response.data || response.data.length === 0) {
+        console.warn('Warning: No data received from backend');
+        setError('No data available.');
+        setFetchedData({ poles: [], connections: [] }); // Clear previous data
+      } else {
+        // Set fetched data based on type
+        if (type === 'Poles') {
+          setFetchedData((prevData) => ({ ...prevData, poles: response.data }));
+        } else if (type === 'Connections') {
+          setFetchedData((prevData) => ({ ...prevData, connections: response.data }));
+        }
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to fetch data from the backend');
+      setLoading(false);
+    }
+  };
+
+  // Trigger data fetch when layer toggles (for Poles and Connections)
+  useEffect(() => {
+    // If Poles is true, fetch Poles data
+    if (layers.Poles) {
+      fetchData('Poles');
+    } else {
+      setFetchedData((prevData) => ({ ...prevData, poles: [] })); // Clear Poles data when unchecked
+    }
+
+    // If Connections is true, fetch Connections data
+    if (layers.Connections) {
+      fetchData('Connections');
+    } else {
+      setFetchedData((prevData) => ({ ...prevData, connections: [] })); // Clear Connections data when unchecked
+    }
+  }, [layers]);
+
+  // Trigger data fetch when connection status toggles
+  useEffect(() => {
+    if (layers.Poles || layers.Connections) {
+      // If either Poles or Connections is enabled, trigger the corresponding fetch
+      fetchData(layers.Poles ? 'Poles' : 'Connections', connectionStatus.Active ? 'Active' : '');
+    }
+  }, [connectionStatus]);
+
+  // Handle layer toggle (Poles and Connections)
   const handleLayerToggle = (layer) => {
     setLayers((prevLayers) => {
       const newLayers = { ...prevLayers, [layer]: !prevLayers[layer] };
-
-      // If the layer for Poles is false, clear the poles data; otherwise, use the full data
-      if (!newLayers.Poles) {
-        setFetchedData((prevData) => ({ ...prevData, poles: [] }));  // Reset poles data if unchecked
-      } else {
-        setFetchedData((prevData) => ({ ...prevData, poles: polesArray })); // Use full poles data if checked
-      }
-
-      // If the layer for Connections is false, clear the connections data; otherwise, use the full data
-      if (!newLayers.Connections) {
-        setFetchedData((prevData) => ({ ...prevData, connections: [] }));  // Reset connections data if unchecked
-      } else {
-        setFetchedData((prevData) => ({ ...prevData, connections: connectionsArray })); // Use full connections data if checked
-      }
-
       return newLayers;
     });
   };
 
-  // Trigger data fetch when connection status toggles (but using static arrays now)
+  // Handle connection status toggle
   const handleConnectionStatusToggle = (status) => {
     setConnectionStatus((prevStatus) => {
       const newStatus = { ...prevStatus, [status]: !prevStatus[status] };
-
-      // Since we have static arrays, no need to fetch data for Connections
-      if (!newStatus[status]) {
-        setFetchedData((prevData) => ({ ...prevData, connections: [] }));  // Reset connections data if unchecked
-      }
-
       return newStatus;
     });
   };
@@ -65,7 +111,7 @@ const GISMainHeat = () => {
         onTileLayerChange={setCurrentTileLayer}
         onConnectionsChange={setConnectionStatus}
         onLayerToggle={handleLayerToggle}
-        onConnectionStatusToggle={handleConnectionStatusToggle}  // Pass handler for connection status
+        onConnectionStatusToggle={handleConnectionStatusToggle}
       />
       <GISViewerHeat
         tileLayer={currentTileLayer}
@@ -73,8 +119,6 @@ const GISMainHeat = () => {
         connectionStatus={connectionStatus}
         fetchedData={fetchedData} // Pass both poles and connections
       />
-      
-   
     </div>
   );
 };

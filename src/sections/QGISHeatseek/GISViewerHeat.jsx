@@ -52,61 +52,61 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
     return null;
   }, []);
 
- const updateVisibleMarkers = useCallback((map) => {
-  const currentFetchedData = fetchedDataRef.current;
-  if (!map) return;
+  const updateVisibleMarkers = useCallback((map) => {
+    const currentFetchedData = fetchedDataRef.current;
+    if (!map) return;
 
-  const bounds = map.getBounds();
-  if (lastBoundsRef.current && lastBoundsRef.current.equals(bounds)) return;
-  lastBoundsRef.current = bounds;
+    const bounds = map.getBounds();
+    if (lastBoundsRef.current && lastBoundsRef.current.equals(bounds)) return;
+    lastBoundsRef.current = bounds;
 
-  // 🔴 If both Poles & Connections are false, clear everything
-  if (!layers.Poles && !layers.Connections) {
-    setVisibleMarkers([]); // Clear visible markers
-    markerClusterGroupRef.current.clearLayers(); // Remove cluster markers from map
-    if (map.hasLayer(markerClusterGroupRef.current)) {
-      map.removeLayer(markerClusterGroupRef.current);
+    // 🔴 If both Poles & Connections are false, clear everything
+    if (!layers.Poles && !layers.Connections) {
+      setVisibleMarkers([]); // Clear visible markers
+      markerClusterGroupRef.current.clearLayers(); // Remove cluster markers from map
+      if (map.hasLayer(markerClusterGroupRef.current)) {
+        map.removeLayer(markerClusterGroupRef.current);
+      }
+      return;
     }
-    return;
-  }
 
-  const filteredMarkers = [
-    ...(layers.Poles ? currentFetchedData.poles : []).map((pole) => {
-      const coords = parseGeom(pole.geom);
-      if (!coords) return null;
-      return { ...pole, coords };
-    }),
-    ...(layers.Connections ? currentFetchedData.connections : []).map((connection) => {
-      const coords = parseGeom(connection.geom);
-      if (!coords) return null;
-      return { ...connection, coords };
-    }),
-  ].filter((item) => item?.coords && bounds.contains(item.coords));
+    const filteredMarkers = [
+      ...(layers.Poles ? currentFetchedData.poles : []).map((pole) => {
+        const coords = parseGeom(pole.geom);
+        if (!coords) return null;
+        return { ...pole, coords };
+      }),
+      ...(layers.Connections ? currentFetchedData.connections : []).map((connection) => {
+        const coords = parseGeom(connection.geom);
+        if (!coords) return null;
+        return { ...connection, coords };
+      }),
+    ].filter((item) => item?.coords && bounds.contains(item.coords));
 
-  if (filteredMarkers.length !== lastVisibleMarkersRef.current.length) {
-    lastVisibleMarkersRef.current = filteredMarkers;
-    setVisibleMarkers(filteredMarkers);
-  }
-
-  // 🔵 Update Cluster Markers if Zoomed Out
-  if (map.getZoom() < ZOOM_THRESHOLD) {
-    markerClusterGroupRef.current.clearLayers();
-    filteredMarkers.forEach(({ pk, name, type, pole_use, coords }) => {
-      const marker = L.marker(coords, { icon: dotIcon }).bindPopup(
-        `<b>Name:</b> ${name} <br /><b>Type:</b> ${type} <br /><b>Use:</b> ${pole_use}`
-      );
-      markerClusterGroupRef.current.addLayer(marker);
-    });
-
-    if (!map.hasLayer(markerClusterGroupRef.current)) {
-      map.addLayer(markerClusterGroupRef.current);
+    if (filteredMarkers.length !== lastVisibleMarkersRef.current.length) {
+      lastVisibleMarkersRef.current = filteredMarkers;
+      setVisibleMarkers(filteredMarkers);
     }
-  } else {
-    if (map.hasLayer(markerClusterGroupRef.current)) {
-      map.removeLayer(markerClusterGroupRef.current);
+
+    // 🔵 Update Cluster Markers if Zoomed Out
+    if (map.getZoom() < ZOOM_THRESHOLD) {
+      markerClusterGroupRef.current.clearLayers();
+      filteredMarkers.forEach(({ pk, name, type, pole_use, coords }) => {
+        const marker = L.marker(coords, { icon: dotIcon }).bindPopup(
+          `<b>Name:</b> ${name} <br /><b>Type:</b> ${type} <br /><b>Use:</b> ${pole_use}`
+        );
+        markerClusterGroupRef.current.addLayer(marker);
+      });
+
+      if (!map.hasLayer(markerClusterGroupRef.current)) {
+        map.addLayer(markerClusterGroupRef.current);
+      }
+    } else {
+      if (map.hasLayer(markerClusterGroupRef.current)) {
+        map.removeLayer(markerClusterGroupRef.current);
+      }
     }
-  }
-}, [layers.Poles, layers.Connections, parseGeom]);
+  }, [layers.Poles, layers.Connections, parseGeom]);
 
   // Throttled version of updateVisibleMarkers (200ms delay)
   const throttledUpdateVisibleMarkers = useMemo(
@@ -153,92 +153,84 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
     }
   }, [fetchedData, parseGeom]);
 
-  // Compute heatmap data arrays using useMemo for each category
-  const activeHeatData = useMemo(() => {
-    if (!connectionStatus.Active) return [];
+  // Compute heatmap data arrays using useMemo for each category (based on strength_active)
+  const connectionHeatData = useMemo(() => {
+    if (!layers.Connections) return [];
     return (fetchedData.connections || [])
       .map((connection) => {
         const coords = parseGeom(connection.geom);
         if (!coords) return null;
-        const intensity = connection.active != null ? connection.active : 1;
-        return [coords[0], coords[1], intensity];
+        const strength = connection.strength_active != null ? connection.strength_active : 1;
+        return [coords[0], coords[1], strength];
       })
       .filter(Boolean);
-  }, [fetchedData.connections, connectionStatus.Active, parseGeom]);
+  }, [fetchedData.connections, layers.Connections, parseGeom]);
 
-  const dormantHeatData = useMemo(() => {
-    if (!connectionStatus.Dormant) return [];
-    return (fetchedData.connections || [])
-      .map((connection) => {
-        const coords = parseGeom(connection.geom);
-        if (!coords) return null;
-        const intensity = connection.dormant != null ? connection.dormant : 1;
-        return [coords[0], coords[1], intensity];
-      })
-      .filter(Boolean);
-  }, [fetchedData.connections, connectionStatus.Dormant, parseGeom]);
-
-  const inaHeatData = useMemo(() => {
-    if (!connectionStatus.INA) return [];
-    return (fetchedData.connections || [])
-      .map((connection) => {
-        const coords = parseGeom(connection.geom);
-        if (!coords) return null;
-        const intensity = connection.ina != null ? connection.ina : 1;
-        return [coords[0], coords[1], intensity];
-      })
-      .filter(Boolean);
-  }, [fetchedData.connections, connectionStatus.INA, parseGeom]);
-
-  // Add heatmap layers with optimized options for density
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current;
-    let activeLayer, dormantLayer, inaLayer;
 
-    const zoomFactor = Math.max(1, (currentZoom - 13) / 3); // Increase intensity as you zoom in
+  // 🔄 **Normalize Values to Invert Strength**
+  const adjustedHeatData = connectionHeatData.map(([lat, lng, strength]) => {
+    const invertedStrength = 1 - strength; // Now 0.0 becomes 1.0 (strongest red)
+    return [lat, lng, invertedStrength];
+  });
 
-
-    if (activeHeatData.length > 0) {
-      activeLayer = L.heatLayer(activeHeatData, {
+  const redLayer = L.heatLayer(adjustedHeatData, {
+    radius: 30,
+    blur: 25,
+    maxZoom: 16,
+    max: 1, // Ensure normalization works
+    gradient: {
+      1.0: "#ff0000", // 🔴 **Now strongest at 0.0**
+      0.65: "#ff6666",
+      0.35: "#ff9999", // 🟥 Now fades at 0.35
+      0.0: "#ffffff", // 🔄 **Now weakest at 1.0 (white/invisible)**
+    },
+    opacity: 0.9, // **Force visibility**
+  });
+    // 🟠 Orange Layer (Medium connections)
+    const orangeLayer = L.heatLayer(
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.35 && strength <= 0.65),
+      {
         radius: 30,
         blur: 25,
         maxZoom: 16,
-        max: 5,
-        gradient: { 0.4: "#ccffcc", 0.65: "#66ff66", 1: "#008000" },
-      });
-      activeLayer.addTo(map);
-    }
+        max: 0.65,
+        gradient: {
+          0.36: "#ff8000", // Mid orange
+          0.65: "#ffb366", // Light orange
+        },
+      }
+    );
 
-    if (dormantHeatData.length > 0) {
-      dormantLayer = L.heatLayer(dormantHeatData, {
+    // 🟢 Green Layer (Strong connections)
+    const greenLayer = L.heatLayer(
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.65),
+      {
         radius: 30,
         blur: 25,
         maxZoom: 16,
-        max: 5,
-        gradient: { 0.4: "#ffe6cc", 0.65: "#ffb84d", 1: "#ff8000" },
-      });
-      dormantLayer.addTo(map);
-    }
+        max: 1,
+        gradient: {
+          0.66: "#66ff33", // Light green
+          1.0: "#00ff00", // Strong green
+        },
+      }
+    );
 
-    if (inaHeatData.length > 0) {
-      inaLayer = L.heatLayer(inaHeatData, {
-        radius: 30 * zoomFactor, // Bigger radius for better visibility
-        blur: 0 * zoomFactor, // Lower blur so the red is clearer
-        maxZoom: 16,
-        max: 5 * zoomFactor, // Higher max to make it pop more
-        gradient: { 0.2: "#ff9999", 0.5: "#ff4d4d", 1: "#ff0000" }, // Make red more visible
-      });
-      inaLayer.addTo(map);
-    
-    }
+    // 🗺️ Add layers to the map
+    redLayer.addTo(map);
+    orangeLayer.addTo(map);
+    greenLayer.addTo(map);
 
+    // Cleanup function to remove layers
     return () => {
-      if (activeLayer) map.removeLayer(activeLayer);
-      if (dormantLayer) map.removeLayer(dormantLayer);
-      if (inaLayer) map.removeLayer(inaLayer);
+      map.removeLayer(redLayer);
+      map.removeLayer(orangeLayer);
+      map.removeLayer(greenLayer);
     };
-  }, [activeHeatData, dormantHeatData, inaHeatData]);
+  }, [connectionHeatData]);
 
   return (
     <div className="h-screen relative">
@@ -247,13 +239,15 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
         <MapEventHandler />
         {/* When zoomed in, render individual markers */}
         {currentZoom >= ZOOM_THRESHOLD &&
-          visibleMarkers.map(({ pk, name, type, pole_use, coords, pole_name, ina, active, dormant }) => (
+          visibleMarkers.map(({ pk, name, type, pole_use, coords, pole_name, ina, active, dormant, strength_active }) => (
             <Marker key={pk} position={coords} icon={dotIcon}>
               <Popup>
                 <b>Pole Name:</b> {pole_name || name} <br />
                 <b>Active Strength:</b> {active ?? "N/A"} <br />
                 <b>Dormant Strength:</b> {dormant ?? "N/A"} <br />
                 <b>Ina Strength:</b> {ina ?? "N/A"} <br />
+                <b>Strength (Active) Percentage:</b> {strength_active != null ? `${(strength_active * 100).toFixed(2)}%` : "N/A"} <br />
+
               </Popup>
             </Marker>
           ))}

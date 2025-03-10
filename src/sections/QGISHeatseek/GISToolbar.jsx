@@ -14,8 +14,8 @@ const Dropdown = ({ label, isOpen, onToggle, children }) => {
       </button>
       {isOpen && (
         <div className="absolute bg-white shadow-lg rounded-md mt-2 w-48 z-50 p-2 left-0 border border-gray-300">
-    {children}
-  </div>
+          {children}
+        </div>
       )}
     </div>
   );
@@ -33,13 +33,12 @@ const LayersDropdown = ({ label, isOpen, onToggle, children }) => {
       </button>
       {isOpen && (
         <div className="absolute bg-white shadow-lg rounded-md mt-2 w-48 z-50 p-2 left-0 border border-gray-300">
-    {children}
-  </div>
+          {children}
+        </div>
       )}
     </div>
   );
 };
-
 
 const GISToolbar = ({
   layers,
@@ -66,16 +65,11 @@ const GISToolbar = ({
 
   const handleLayerToggle = (layer) => {
     onLayerToggle(layer);
+    // Only toggle the connection or pole layer
     if (layer === 'Connections') {
-      setOpenSubDropdown(!layers.Connections);
+      // If Connections is toggled, we fetch the Connections layer
       onConnectionsChange({ ...connectionStatus, Connections: !layers.Connections });
-      toggleSubDropdown()
     }
-  };
-
-  const handleConnectionStatusToggle = (status) => {
-    const newConnectionStatus = { ...connectionStatus, [status]: !connectionStatus[status] };
-    onConnectionsChange(newConnectionStatus);
   };
 
   return (
@@ -110,6 +104,7 @@ const GISToolbar = ({
           >
             <div className="flex flex-col bg-gray-100 rounded-md shadow-md">
               <div className="space-y-2">
+                {/* Poles Layer */}
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -119,27 +114,14 @@ const GISToolbar = ({
                   <span>Poles</span>
                 </label>
 
-                <label className="flex items-center space-x-2 relative">
+                {/* Connections Layer */}
+                <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     checked={layers.Connections}
                     onChange={() => handleLayerToggle('Connections')}
                   />
                   <span>Connections</span>
-                  {layers.Connections && openSubDropdown && (
-                    <div className="absolute left-44 top-0 bg-white shadow-lg rounded-md p-2 border border-gray-300 w-36">
-                      {['INA', 'Dormant', 'Active'].map((status) => (
-                        <label key={status} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={connectionStatus[status]}
-                            onChange={() => handleConnectionStatusToggle(status)}
-                          />
-                          <span>{status}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
                 </label>
               </div>
             </div>
