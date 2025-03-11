@@ -139,18 +139,25 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
     }, [map, throttledUpdateVisibleMarkers]);
     return null;
   };
-
-  // Auto-zoom to fit markers when data arrives
   useEffect(() => {
-    if (mapRef.current && (fetchedData.poles.length || fetchedData.connections.length)) {
+    if (mapRef.current && fetchedData.poles.length + fetchedData.connections.length > 0) {
       const map = mapRef.current;
-      const bounds = L.latLngBounds([
-        ...fetchedData.poles.map((p) => parseGeom(p.geom)),
-        ...fetchedData.connections.map((c) => parseGeom(c.geom)),
-      ]);
-      map.fitBounds(bounds, { padding: [50, 50] });
+  
+      // Only zoom on initial load, NOT when toggling layers
+      if (!lastBoundsRef.current) {  
+        const bounds = L.latLngBounds([
+          ...fetchedData.poles.map((p) => parseGeom(p.geom)),
+          ...fetchedData.connections.map((c) => parseGeom(c.geom)),
+        ]);
+  
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [50, 50] });
+          lastBoundsRef.current = bounds;  // Save so we don't zoom again
+        }
+      }
     }
-  }, [fetchedData, parseGeom]);
+  }, [fetchedData, parseGeom]);  // ✅ Layers are NOT in dependencies, so toggling won't trigger zoom
+  
 
   // Compute heatmap data arrays using useMemo for each category (based on strength_active)
   const connectionHeatData = useMemo(() => {
