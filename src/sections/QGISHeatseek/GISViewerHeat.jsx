@@ -123,7 +123,6 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
 
       const onZoomEnd = () => {
         const zoom = map.getZoom();
-        setCurrentZoom(zoom);
         throttledUpdateVisibleMarkers(map);
       };
       const onMoveEnd = () => {
@@ -170,63 +169,63 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
     if (!mapRef.current) return;
     const map = mapRef.current;
 
-  // 🔄 **Normalize Values to Invert Strength**
-  const adjustedHeatData = connectionHeatData.map(([lat, lng, strength]) => {
-    const invertedStrength = 1 - strength; // Now 0.0 becomes 1.0 (strongest red)
-    return [lat, lng, invertedStrength];
-  });
+    // 🔄 **Normalize Values to Invert Strength**
+    const adjustedHeatData = connectionHeatData.map(([lat, lng, strength]) => {
+      const invertedStrength = 1 - strength; // Now 0.0 becomes 1.0 (strongest red)
+      return [lat, lng, invertedStrength];
+    });
 
-  const redLayer = L.heatLayer(adjustedHeatData, {
-    radius: 30,
-    blur: 25,
-    maxZoom: 16,
-    max: 1,
-    gradient: {
-      1.0: "#ff0000",  // 🔴 Strongest red (0.0 strength)
-      0.75: "#ff4d4d", // 🔴 Slightly lighter red
-      0.65: "#ff6666", // 🟥 Lighter red
-      0.50: "#ff8080", // 🔴 Soft red
-      0.35: "#ff9999", // 🟥 Pale red
-      0.20: "#ffcccc", // 🔲 Fading red
-      0.0: "#ffffff",  // ⚪ Weakest (1.0 strength, nearly invisible)
-    },
-    opacity: 0.9,
-  });
-  
-  // 🟠 Orange Layer (Medium connections)
-  const orangeLayer = L.heatLayer(
-    connectionHeatData.filter(([lat, lng, strength]) => strength > 0.35 && strength <= 0.65),
-    {
-      radius: 30,
-      blur: 25,
-      maxZoom: 16,
-      max: 0.65,
-      gradient: {
-        0.65: "#ff5e00", // 🔶 Strong orange
-        0.55: "#ff8000", // 🟠 Orange
-        0.45: "#ffa64d", // 🔶 Light orange
-        0.36: "#ffcc99", // 🟠 Soft orange
-      },
-    }
-  );
-  
-  // 🟢 Green Layer (Strong connections)
-  const greenLayer = L.heatLayer(
-    connectionHeatData.filter(([lat, lng, strength]) => strength > 0.65),
-    {
+    const redLayer = L.heatLayer(adjustedHeatData, {
       radius: 30,
       blur: 25,
       maxZoom: 16,
       max: 1,
       gradient: {
-        1.0: "#00ff00",  // 🟢 Strong green
-        0.85: "#33ff33", // 🟢 Lighter green
-        0.75: "#66ff66", // 🟢 Softer green
-        0.66: "#99ff99", // 🟢 Fading green
+        1.0: "#ff0000",  // 🔴 Strongest red (0.0 strength)
+        0.75: "#ff4d4d", // 🔴 Slightly lighter red
+        0.65: "#ff6666", // 🟥 Lighter red
+        0.50: "#ff8080", // 🔴 Soft red
+        0.35: "#ff9999", // 🟥 Pale red
+        0.20: "#ffcccc", // 🔲 Fading red
+        0.0: "#ffffff",  // ⚪ Weakest (1.0 strength, nearly invisible)
       },
-    }
-  );
-  
+      opacity: 0.9,
+    });
+
+    // 🟠 Orange Layer (Medium connections)
+    const orangeLayer = L.heatLayer(
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.35 && strength <= 0.65),
+      {
+        radius: 30,
+        blur: 25,
+        maxZoom: 16,
+        max: 0.65,
+        gradient: {
+          0.65: "#ff5e00", // 🔶 Strong orange
+          0.55: "#ff8000", // 🟠 Orange
+          0.45: "#ffa64d", // 🔶 Light orange
+          0.36: "#ffcc99", // 🟠 Soft orange
+        },
+      }
+    );
+
+    // 🟢 Green Layer (Strong connections)
+    const greenLayer = L.heatLayer(
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.65),
+      {
+        radius: 30,
+        blur: 25,
+        maxZoom: 16,
+        max: 1,
+        gradient: {
+          1.0: "#00ff00",  // 🟢 Strong green
+          0.85: "#33ff33", // 🟢 Lighter green
+          0.75: "#66ff66", // 🟢 Softer green
+          0.66: "#99ff99", // 🟢 Fading green
+        },
+      }
+    );
+
 
     // 🗺️ Add layers to the map
     redLayer.addTo(map);
@@ -247,19 +246,20 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
         <TileLayer url={tileLayer.url} attribution={tileLayer.attribution} />
         <MapEventHandler />
         {/* When zoomed in, render individual markers */}
-        {currentZoom >= ZOOM_THRESHOLD &&
-          visibleMarkers.map(({ pk, name, type, pole_use, coords, pole_name, ina, active, dormant, strength_active }) => (
-            <Marker key={pk} position={coords} icon={dotIcon}>
-              <Popup>
-                <b>Pole Name:</b> {pole_name || name} <br />
-                <b>Active Strength:</b> {active ?? "N/A"} <br />
-                <b>Dormant Strength:</b> {dormant ?? "N/A"} <br />
-                <b>Ina Strength:</b> {ina ?? "N/A"} <br />
-                <b>Strength (Active) Percentage:</b> {strength_active != null ? `${(strength_active * 100).toFixed(2)}%` : "N/A"} <br />
+        {currentZoom >= ZOOM_THRESHOLD && layers.Poles && !layers.Connections &&
+  visibleMarkers.map(({ pk, name, type, pole_use, coords, pole_name, ina, active, dormant, strength_active }) => (
+    <Marker key={pk} position={coords} icon={dotIcon}>
+      <Popup>
+        <b>Pole Name:</b> {pole_name || name} <br />
+        <b>Active Strength:</b> {active ?? "N/A"} <br />
+        <b>Dormant Strength:</b> {dormant ?? "N/A"} <br />
+        <b>Ina Strength:</b> {ina ?? "N/A"} <br />
+        <b>Strength (Active) Percentage:</b> {strength_active != null ? `${(strength_active * 100).toFixed(2)}%` : "N/A"} <br />
+      </Popup>
+    </Marker>
+  ))
+}
 
-              </Popup>
-            </Marker>
-          ))}
         {visibleMarkers.length === 0 && <p>No visible markers in the current view.</p>}
       </MapContainer>
     </div>
