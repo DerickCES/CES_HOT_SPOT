@@ -245,8 +245,7 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
       <MapContainer center={center} zoom={_ZOOM_LEVEL} ref={mapRef} className="h-full z-0">
         <TileLayer url={tileLayer.url} attribution={tileLayer.attribution} />
         <MapEventHandler />
-        {/* When zoomed in, render individual markers */}
-        {currentZoom >= ZOOM_THRESHOLD && layers.Poles && !layers.Connections &&
+        {currentZoom >= ZOOM_THRESHOLD && layers.Poles &&
   visibleMarkers.map(({ pk, name, type, pole_use, coords, pole_name, ina, active, dormant, strength_active }) => (
     <Marker key={pk} position={coords} icon={dotIcon}>
       <Popup>
@@ -259,7 +258,6 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
     </Marker>
   ))
 }
-
         {visibleMarkers.length === 0 && <p>No visible markers in the current view.</p>}
       </MapContainer>
     </div>
