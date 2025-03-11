@@ -74,9 +74,9 @@ const GISToolbar = ({
 
   return (
     <div className="bg-gray-800 p-2 shadow-md">
-      <div className="container mx-2 flex space-x-2">
+      <div className="container mx-6 flex space-x-2">
         {/* Toolbar components */}
-        <div className="flex space-x-2 bg-gradient-to-r from-blue-900 to-blue-400 rounded-lg">
+        <div className="flex space-x-2 bg-gradient-to-r from-sky-400 to-sky-600 text-sky-900 rounded-lg">
           {/* Map Tiles Dropdown */}
           <Dropdown
             label="Map Tiles"

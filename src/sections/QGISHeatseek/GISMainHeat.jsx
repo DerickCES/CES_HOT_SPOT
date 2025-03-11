@@ -4,6 +4,7 @@ import { TILE_LAYERS } from '../map_tile_providerGISViewer';
 import GISToolbar from './GISToolbar';
 import GISViewerHeat from './GISViewerHeat';
 import DataFetcher from './DATA';
+import GISMenuBar from './GISMenuBar';
 
 const GISMainHeat = () => {
   const [currentTileLayer, setCurrentTileLayer] = useState(TILE_LAYERS.OpenStreetMapUK);
@@ -104,7 +105,9 @@ const GISMainHeat = () => {
   };
 
   return (
+	
     <div>
+		<GISMenuBar/>
       <GISToolbar
         layers={layers}
         connectionStatus={connectionStatus}

@@ -17,6 +17,8 @@ import HeroV2bg1 from './HeroV2bg1.png'
 import HeroV2bg2 from './HeroV2bg2.png'
 import BlenderCES from './BlenderCES.png'
 import fiber from './fiber.png'
+import Africa from './Africa.jpg'
+
 
 export {
 
@@ -38,4 +40,5 @@ export {
     CESteam,
     herobg,
     fiber,
+    Africa,
 }
