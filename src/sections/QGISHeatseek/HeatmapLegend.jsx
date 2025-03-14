@@ -3,7 +3,7 @@ import React from "react";
 const HeatmapLegend = () => {
   return (
     <div className="absolute bottom-5 right-5 bg-white shadow-md rounded-md p-3 w-56">
-      <b className="block text-center mb-2">Strength Weigth</b>
+      <b className="block text-center mb-2">Strength Percentage</b>
 
       {/* Gradient Bar */}
       <div className="relative h-4 w-full rounded-full overflow-hidden border border-gray-400">
