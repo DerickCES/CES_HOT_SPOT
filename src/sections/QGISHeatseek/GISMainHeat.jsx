@@ -35,17 +35,17 @@ const GISMainHeat = () => {
     }
 
     try {
-      console.log('Fetching data with:', { type, status });
+      
 
       const response = await axios.get('https://hotspot-service.onrender.com/fetchData', {
         params: { type, ...(status ? { status } : {}) },
         timeout: 60000, // Wait for 60 seconds
       });
 
-      console.log('Received Data:', response.data);
+      
 
       if (!response.data || response.data.length === 0) {
-        console.warn('Warning: No data received from backend');
+        
         setError('No data available.');
         setFetchedData({ poles: [], connections: [] }); // Clear previous data
       } else {
@@ -59,7 +59,7 @@ const GISMainHeat = () => {
 
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching data:', err);
+    
       setError('Failed to fetch data from the backend');
       setLoading(false);
     }
