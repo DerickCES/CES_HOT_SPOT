@@ -253,12 +253,14 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
     redLayer.addTo(map);
     orangeLayer.addTo(map);
     greenLayer.addTo(map);
+	yellowLayer.addTo(map);
 
     // Cleanup function to remove layers
     return () => {
       map.removeLayer(redLayer);
       map.removeLayer(orangeLayer);
       map.removeLayer(greenLayer);
+	  map.removeLayer(yellowLayer)
     };
   }, [connectionHeatData]);
 

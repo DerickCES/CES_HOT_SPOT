@@ -24,10 +24,10 @@ const HeatmapLegend = () => {
       {/* Percentage Labels */}
       <div className="flex justify-between text-xs mt-1 font-bold">
         <span className="text-red-600">0%</span>
-        <span className="text-orange-600">25%</span>
-        <span className="text-yellow-600">50%</span>
-        <span className="text-green-600">75%</span>
-        <span className="text-green-800">100%</span>
+        <span className="text-red-400">25%</span>
+        <span className="text-orange-600">50%</span>
+        <span className="text-yellow-400">75%</span>
+        <span className="text-green-600">100%</span>
       </div>
     </div>
   );
