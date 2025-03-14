@@ -5,6 +5,8 @@ import GISToolbar from './GISToolbar';
 import GISViewerHeat from './GISViewerHeat';
 import DataFetcher from './DATA';
 import GISMenuBar from './GISMenuBar';
+import HeatmapLegend from './HeatmapLegend';
+
 
 const GISMainHeat = () => {
   const [currentTileLayer, setCurrentTileLayer] = useState(TILE_LAYERS.OpenStreetMapUK);
@@ -121,7 +123,9 @@ const GISMainHeat = () => {
         layers={layers}
         connectionStatus={connectionStatus}
         fetchedData={fetchedData} // Pass both poles and connections
+
       />
+	  <HeatmapLegend/>
     </div>
   );
 };

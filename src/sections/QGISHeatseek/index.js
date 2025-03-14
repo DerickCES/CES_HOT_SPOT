@@ -6,6 +6,7 @@ import LoginGIS from "./LoginGIS";
 import GISLayers from "./GISLayers";
 import GISViewerHeat from "./GISViewerHeat";
 import DataFetcher from "./DATA";
+import HeatmapLegend from "./HeatmapLegend";
 
 export {
     GISMenuBar,
@@ -15,5 +16,6 @@ export {
     GISLayers,
     GISViewerHeat,
     DataFetcher,
+    HeatmapLegend,
     // /GISViewer,  
 }

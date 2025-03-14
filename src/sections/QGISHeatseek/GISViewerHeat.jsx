@@ -199,26 +199,42 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
       opacity: 0.9,
     });
 
-    // 🟠 Orange Layer (Medium connections)
     const orangeLayer = L.heatLayer(
-      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.35 && strength <= 0.65),
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.25 && strength <= 0.50),
       {
         radius: 30,
         blur: 25,
         maxZoom: 16,
-        max: 0.65,
+        max: 0.50,
         gradient: {
-          0.65: "#ff5e00", // 🔶 Strong orange
-          0.55: "#ff8000", // 🟠 Orange
-          0.45: "#ffa64d", // 🔶 Light orange
-          0.36: "#ffcc99", // 🟠 Soft orange
+          0.50: "#ff8000", // 🟠 Orange
+          0.45: "#ff9933", // 🔶 Lighter orange
+          0.40: "#ffb366", // 🔶 Soft orange
+          0.35: "#ffcc99", // 🟠 Fading orange
         },
       }
     );
-
-    // 🟢 Green Layer (Strong connections)
+    
+    // 🟡 Yellow Layer (50-75)
+    const yellowLayer = L.heatLayer(
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.50 && strength <= 0.75),
+      {
+        radius: 30,
+        blur: 25,
+        maxZoom: 16,
+        max: 0.75,
+        gradient: {
+          0.75: "#ffff00", // 🟡 Bright yellow
+          0.70: "#ffff33", // 🟡 Slightly lighter yellow
+          0.65: "#ffff66", // 🟡 Soft yellow
+          0.60: "#ffff99", // 🟡 Fading yellow
+        },
+      }
+    );
+    
+    // 🟢 Green Layer (75-100)
     const greenLayer = L.heatLayer(
-      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.65),
+      connectionHeatData.filter(([lat, lng, strength]) => strength > 0.75),
       {
         radius: 30,
         blur: 25,
@@ -232,7 +248,6 @@ const GISViewerHeat = ({ tileLayer, fetchedData, layers, connectionStatus }) => 
         },
       }
     );
-
 
     // 🗺️ Add layers to the map
     redLayer.addTo(map);
