@@ -45,7 +45,6 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
     if (!geom || typeof geom !== "string") return null;
     const match = geom.match(/POINT\(([-\d.]+) ([-\d.]+)\)/);
     if (match) return [parseFloat(match[2]), parseFloat(match[1])];
-    console.error("Failed to parse geometry:", geom);
     return null;
   }, []);
 
@@ -242,12 +241,10 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
               (c) => c.pole_name === pole_name || c.pk === pk
             );
 
-            console.log("🔍 Pole:", { pk, pole_name, match: connection });
-
             return (
               <Marker key={pk} position={coords} icon={dotIcon}>
                 <Popup>
-                  <b>Pole Name:</b> {pole_name || name} <br />
+                  <b>Name:</b> {pole_name || name} <br />
                   <b>Active Strength:</b> {connection?.active ?? "N/A"} <br />
                   <b>Dormant Strength:</b> {connection?.dormant ?? "N/A"} <br />
                   <b>Ina Strength:</b> {connection?.ina ?? "N/A"} <br />

@@ -48,7 +48,6 @@ const GISMainHeat = () => {
       } else {
         setFetchedData({ result: response.data });
 
-        console.log(fetchedData)
         
       }
     } catch (err) {

@@ -9,7 +9,7 @@ const DataFetcher = () => {
 
   const fetchData = async (type, status = '') => {
     if (!type) {
-      console.error('Type is required but missing.');
+      
       setError('Type parameter is missing.');
       setLoading(false);
       return;
