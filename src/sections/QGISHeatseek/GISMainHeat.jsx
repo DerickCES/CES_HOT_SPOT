@@ -6,128 +6,76 @@ import GISViewerHeat from './GISViewerHeat';
 import DataFetcher from './DATA';
 import GISMenuBar from './GISMenuBar';
 import HeatmapLegend from './HeatmapLegend';
+import dayjs from 'dayjs';
 
 
 const GISMainHeat = () => {
-  const [currentTileLayer, setCurrentTileLayer] = useState(TILE_LAYERS.OpenStreetMapUK);
-  const [fetchedData, setFetchedData] = useState({ poles: [], connections: [] }); // Real fetched data
-  const [layers, setLayers] = useState({
-    Poles: false,
-    Connections: false,
-  });
-
-  const [connectionStatus, setConnectionStatus] = useState({
-    INA: false,
-    Dormant: false,
-    Active: false,
-  });
-
+  const [currentTileLayer, setCurrentTileLayer] = useState(TILE_LAYERS.GoogleHybrid);
+  const [fetchedData, setFetchedData] = useState({ result: [] }); // Real fetched data
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [distpoint, setDistributionPointsVisible] = useState(null);
 
-  // Function to fetch data based on the type and status
-  const fetchData = async (type, status = '') => {
-    if (!type) {
-      console.error('Type is required but missing.');
-      setError('Type parameter is missing.');
+  const handleDateChange = (newDate) => {
+    setSelectedDate(newDate);
+    const formattedDate = newDate.format('MMYYYY');
+    fetchData(formattedDate, distpoint);
+  };
+
+  const handleDistributionPointsChange = (isVisible) => {
+    setDistributionPointsVisible(isVisible);
+    const formattedDate = selectedDate.format('MMYYYY');
+    fetchData(formattedDate, isVisible);
+  };
+
+  const fetchData = async (date, distpoint) => {
+    if (!date) {
       setLoading(false);
       return;
     }
-
+  
     try {
-      
-
+      setLoading(true);
       const response = await axios.get('https://hotspot-service.onrender.com/fetchData', {
-        params: { type, ...(status ? { status } : {}) },
-        timeout: 60000, // Wait for 60 seconds
+        params: { date, distpoint },
+        timeout: 60000, // 60 seconds timeout
       });
-
-      
-
-      if (!response.data || response.data.length === 0) {
-        
-        setError('No data available.');
-        setFetchedData({ poles: [], connections: [] }); // Clear previous data
+  
+      if (response.data.result === "_F") {
+        setError('No data available or table does not exist.');
+        setFetchedData({ result: [] });
       } else {
-        // Set fetched data based on type
-        if (type === 'Poles') {
-          setFetchedData((prevData) => ({ ...prevData, poles: response.data }));
-        } else if (type === 'Connections') {
-          setFetchedData((prevData) => ({ ...prevData, connections: response.data }));
-        }
+        setFetchedData({ result: response.data });
+
+        console.log(fetchedData)
+        
       }
-
-      setLoading(false);
     } catch (err) {
-    
       setError('Failed to fetch data from the backend');
+      setFetchedData({ result: [] });
+    } finally {
       setLoading(false);
     }
   };
-
-  // Trigger data fetch when layer toggles (for Poles and Connections)
-  useEffect(() => {
-    // If Poles is true, fetch Poles data
-    if (layers.Poles) {
-      fetchData('Poles');
-    } else {
-      setFetchedData((prevData) => ({ ...prevData, poles: [] })); // Clear Poles data when unchecked
-    }
-
-    // If Connections is true, fetch Connections data
-    if (layers.Connections) {
-      fetchData('Connections');
-    } else {
-      setFetchedData((prevData) => ({ ...prevData, connections: [] })); // Clear Connections data when unchecked
-    }
-  }, [layers]);
-
-  // Trigger data fetch when connection status toggles
-  useEffect(() => {
-    if (layers.Poles || layers.Connections) {
-      // If either Poles or Connections is enabled, trigger the corresponding fetch
-      fetchData(layers.Poles ? 'Poles' : 'Connections', connectionStatus.Active ? 'Active' : '');
-    }
-  }, [connectionStatus]);
-
-  // Handle layer toggle (Poles and Connections)
-  const handleLayerToggle = (layer) => {
-    setLayers((prevLayers) => {
-      const newLayers = { ...prevLayers, [layer]: !prevLayers[layer] };
-      return newLayers;
-    });
-  };
-
-  // Handle connection status toggle
-  const handleConnectionStatusToggle = (status) => {
-    setConnectionStatus((prevStatus) => {
-      const newStatus = { ...prevStatus, [status]: !prevStatus[status] };
-      return newStatus;
-    });
-  };
-
+  
   return (
-	
     <div>
-		<GISMenuBar/>
+      <GISMenuBar />
       <GISToolbar
-        layers={layers}
-        connectionStatus={connectionStatus}
         onTileLayerChange={setCurrentTileLayer}
-        onConnectionsChange={setConnectionStatus}
-        onLayerToggle={handleLayerToggle}
-        onConnectionStatusToggle={handleConnectionStatusToggle}
+        onDateChange={handleDateChange} // Ensure this function is defined in the parent
+        onDistributionPointsChange={handleDistributionPointsChange}
       />
       <GISViewerHeat
         tileLayer={currentTileLayer}
-        layers={layers}
-        connectionStatus={connectionStatus}
-        fetchedData={fetchedData} // Pass both poles and connections
-
+        fetchedData={fetchedData}
+        distpoint={distpoint} // Pass both poles and connections
       />
-	  <HeatmapLegend/>
+      <HeatmapLegend />
     </div>
   );
 };
 
 export default GISMainHeat;
+

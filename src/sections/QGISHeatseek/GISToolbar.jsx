@@ -1,61 +1,57 @@
+import React, { useState } from 'react';
 import { FaLayerGroup, FaMap } from 'react-icons/fa';
-import { useState } from 'react';
 import { TILE_LAYERS } from '../map_tile_providerGISViewer';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import TextField from '@mui/material/TextField';
+import dayjs from 'dayjs';
 
-const Dropdown = ({ label, isOpen, onToggle, children }) => {
-  return (
-    <div className="relative inline-block">
-      <button
-        onClick={onToggle}
-        className="flex flex-col items-center text-white hover:text-blue-400 transition duration-300 p-2"
-        title={label}
-      >
-        <FaMap size={15} />
-      </button>
-      {isOpen && (
-        <div className="absolute bg-white shadow-lg rounded-md mt-2 w-48 z-50 p-2 left-0 border border-gray-300">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
+const Dropdown = ({ label, isOpen, onToggle, children }) => (
+  <div className="relative inline-block">
+    <button
+      onClick={onToggle}
+      className="flex flex-col items-center text-white hover:text-blue-400 transition duration-300 p-2"
+      title={label}
+    >
+      <FaMap size={15} />
+    </button>
+    {isOpen && (
+      <div className="absolute bg-white shadow-lg rounded-md mt-2 w-48 z-50 p-2 left-0 border border-gray-300">
+        {children}
+      </div>
+    )}
+  </div>
+);
 
-const LayersDropdown = ({ label, isOpen, onToggle, children }) => {
-  return (
-    <div className="relative inline-block">
-      <button
-        onClick={onToggle}
-        className="flex flex-col items-center text-white hover:text-blue-400 transition duration-300 p-2"
-        title={label}
-      >
-        <FaLayerGroup size={15} />
-      </button>
-      {isOpen && (
-        <div className="absolute bg-white shadow-lg rounded-md mt-2 w-48 z-50 p-2 left-0 border border-gray-300">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
+const LayersDropdown = ({ label, isOpen, onToggle, children }) => (
+  <div className="relative inline-block">
+    <button
+      onClick={onToggle}
+      className="flex flex-col items-center text-white hover:text-blue-400 transition duration-300 p-2"
+      title={label}
+    >
+      <FaLayerGroup size={15} />
+    </button>
+    {isOpen && (
+      <div className="absolute bg-white shadow-lg rounded-md mt-2 w-48 z-50 p-2 left-0 border border-gray-300">
+        {children}
+      </div>
+    )}
+  </div>
+);
 
 const GISToolbar = ({
-  layers,
-  connectionStatus,
+  onDistributionPointsChange,
   onTileLayerChange,
-  onConnectionsChange,
-  onLayerToggle
+  onDateChange,
 }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [openSubDropdown, setOpenSubDropdown] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [distributionPointsChecked, setDistributionPointsChecked] = useState(false);
+
 
   const toggleDropdown = (label) => {
     setOpenDropdown(openDropdown === label ? null : label);
-  };
-
-  const toggleSubDropdown = () => {
-    setOpenSubDropdown(!openSubDropdown);
   };
 
   const handleTileLayerChange = (layer) => {
@@ -63,21 +59,20 @@ const GISToolbar = ({
     setOpenDropdown(null);
   };
 
-  const handleLayerToggle = (layer) => {
-    onLayerToggle(layer);
-    // Only toggle the connection or pole layer
-    if (layer === 'Connections') {
-      // If Connections is toggled, we fetch the Connections layer
-      onConnectionsChange({ ...connectionStatus, Connections: !layers.Connections });
-    }
+  const handleDateChange = (newDate) => {
+    setSelectedDate(newDate);
+    onDateChange(newDate);
+  };
+
+  const handleCheckboxChange = (event) => {
+    onDistributionPointsChange(event.target.checked);
+    setDistributionPointsChecked(event.target.checked)
   };
 
   return (
     <div className="bg-gray-800 p-2 shadow-md">
       <div className="container mx-6 flex space-x-2">
-        {/* Toolbar components */}
         <div className="flex space-x-2 bg-gradient-to-r from-sky-400 to-sky-600 text-sky-900 rounded-lg">
-          {/* Map Tiles Dropdown */}
           <Dropdown
             label="Map Tiles"
             isOpen={openDropdown === 'Change Map Tile'}
@@ -96,34 +91,31 @@ const GISToolbar = ({
             </div>
           </Dropdown>
 
-          {/* Layers Dropdown */}
           <LayersDropdown
             label="Layer View"
             isOpen={openDropdown === 'Change Layer View'}
             onToggle={() => toggleDropdown('Change Layer View')}
           >
-            <div className="flex flex-col bg-gray-100 rounded-md shadow-md">
-              <div className="space-y-2">
-                {/* Poles Layer */}
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={layers.Poles}
-                    onChange={() => handleLayerToggle('Poles')}
-                  />
-                  <span>Poles</span>
-                </label>
-
-                {/* Connections Layer */}
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={layers.Connections}
-                    onChange={() => handleLayerToggle('Connections')}
-                  />
-                  <span>Connections</span>
-                </label>
-              </div>
+            <div className="flex flex-col bg-gray-100 rounded-md shadow-md p-2">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  views={['year', 'month']}
+                  label="Select Month and Year"
+                  minDate={dayjs('2022-01-01')}
+                  maxDate={dayjs('2025-12-31')}
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  renderInput={(params) => <TextField {...params} helperText={null} />}
+                />
+              </LocalizationProvider>
+              <label className="flex items-center space-x-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={distributionPointsChecked}
+                  onChange={handleCheckboxChange}
+                />
+                <span>Distribution Points</span>
+              </label>
             </div>
           </LayersDropdown>
         </div>
