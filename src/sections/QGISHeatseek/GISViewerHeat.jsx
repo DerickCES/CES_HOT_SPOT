@@ -165,7 +165,7 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
     });
 
     const orangeLayer = L.heatLayer(
-      connectionHeatData.filter(([, , strength]) => strength > 0.25 && strength <= 0.5),
+      connectionHeatData.filter(([lat,lng,strength]) => strength > 0.25 && strength <= 0.5),
       {
         radius: 30,
         blur: 25,
@@ -181,7 +181,7 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
     );
 
     const yellowLayer = L.heatLayer(
-      connectionHeatData.filter(([, , strength]) => strength > 0.5 && strength <= 0.75),
+      connectionHeatData.filter(([lat,lng,strength]) => strength > 0.5 && strength <= 0.75),
       {
         radius: 30,
         blur: 25,
@@ -197,7 +197,7 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
     );
 
     const greenLayer = L.heatLayer(
-      connectionHeatData.filter(([, , strength]) => strength > 0.75),
+      connectionHeatData.filter(([lat,lng,strength]) => strength > 0.75 && strength <= 1),
       {
         radius: 30,
         blur: 25,
@@ -226,41 +226,45 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
   }, [connectionHeatData]);
 
   return (
-    <div className="h-screen relative">
-      <MapContainer center={center} zoom={_ZOOM_LEVEL} ref={mapRef} className="h-full z-0">
-        <TileLayer url={tileLayer.url} attribution={tileLayer.attribution} />
-        <MapEventHandler />
-        
-        {/* Render red dots instantly based on distpoint */}
-        {distpoint && currentZoom >= ZOOM_THRESHOLD &&
-          visibleMarkers.map(({ pk, name, coords, pole_name }) => {
-            const connections = fetchedData?.result?.connections || [];
+  <div className="h-screen relative">
+    <MapContainer center={center} zoom={_ZOOM_LEVEL} ref={mapRef} className="h-full z-0">
+      <TileLayer url={tileLayer.url} attribution={tileLayer.attribution} />
+      <MapEventHandler />
+      
+      {/* Render red dots instantly based on distpoint */}
+      {distpoint && currentZoom >= ZOOM_THRESHOLD &&
+        visibleMarkers.map(({ pk, name, coords, pole_name }) => {
+          const connections = fetchedData?.result?.connections || [];
+          
+          // Try to match using pole_name first, fallback to pk
+          const connection = connections.find(
+            (c) => c.pole_name === name
+          );
 
-            // Try to match using pole_name first, fallback to pk
-            const connection = connections.find(
-              (c) => c.pole_name === pole_name || c.pk === pk
-            );
+          console.log('Matching connection for pole:', pole_name, connection); // Debug log
 
-            return (
-              <Marker key={pk} position={coords} icon={dotIcon}>
-                <Popup>
-                  <b>Name:</b> {pole_name || name} <br />
-                  <b>Active Strength:</b> {connection?.active ?? "N/A"} <br />
-                  <b>Dormant Strength:</b> {connection?.dormant ?? "N/A"} <br />
-                  <b>Ina Strength:</b> {connection?.ina ?? "N/A"} <br />
-                  <b>Strength (Active) Percentage:</b>{" "}
-                  {connection?.strength_active != null
-                    ? `${(connection.strength_active * 100).toFixed(2)}%`
-                    : "N/A"}
-                </Popup>
-              </Marker>
-            );
-          })}
-        
-        {visibleMarkers.length === 0 && <p>No visible markers in the current view.</p>}
-      </MapContainer>
-    </div>
-  );
+          return (
+            <Marker key={pk} position={coords} icon={dotIcon}>
+              <Popup>
+                <b>Name:</b> {pole_name || name} <br />
+                <b>Active Strength:</b> {connection?.active ?? "N/A"} <br />
+                <b>Dormant Strength:</b> {connection?.dormant ?? "N/A"} <br />
+                <b>Ina Strength:</b> {connection?.ina ?? "N/A"} <br />
+                <b>Strength (Active) Percentage:</b>{" "}
+                {connection?.strength_active != null
+                  ? `${(connection.strength_active * 100).toFixed(2)}%`
+                  : "N/A"}
+              </Popup>
+            </Marker>
+          );
+        })
+      }
+      
+      {visibleMarkers.length === 0 && <p>No visible markers in the current view.</p>}
+    </MapContainer>
+  </div>
+);
+
 };
 
 export default GISViewerHeat;
