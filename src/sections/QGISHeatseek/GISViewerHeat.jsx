@@ -207,7 +207,7 @@ const GISViewerHeat = ({ tileLayer, fetchedData, distpoint }) => {
           1.0: "#00ff00",
           0.85: "#33ff33",
           0.75: "#66ff66",
-          0.66: "#99ff99",
+          0.66: "#3cc93c",
         },
       }
     );
